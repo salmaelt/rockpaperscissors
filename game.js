@@ -85,10 +85,8 @@ class Game {
 
         console.log(`Score: ${this.humanPlayer.name}: ${this.humanPlayer.score}, ${this.computerPlayer.name}: ${this.computerPlayer.score}`);
     }
-
 }
 
-// Game loop implementation
 const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
