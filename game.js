@@ -52,9 +52,11 @@ class Game {
         scissors: "paper"
     };
     
-    constructor(humanPlayer, computerPlayer) {
+    constructor(humanPlayer, computerPlayer, maxRounds) {
         this.humanPlayer = humanPlayer;
         this.computerPlayer = computerPlayer;
+        this.maxRounds = maxRounds;
+        this.currentRound = 0;
     }
     
     playRound() {
@@ -63,9 +65,11 @@ class Game {
             return;
         }
 
+        this.currentRound++;
         const humanChoice = this.humanPlayer.choice;
         const computerChoice = this.computerPlayer.choice;
 
+        console.log(`\n--- Round ${this.currentRound} ---`);
         console.log(`${this.humanPlayer.name} chose ${humanChoice}`);
         console.log(`${this.computerPlayer.name} chose ${computerChoice}`);
 
@@ -84,6 +88,26 @@ class Game {
         this.computerPlayer.resetChoice();
 
         console.log(`Score: ${this.humanPlayer.name}: ${this.humanPlayer.score}, ${this.computerPlayer.name}: ${this.computerPlayer.score}`);
+        
+        if (this.currentRound >= this.maxRounds) {
+            this.endGame();
+            return true; // Game is over
+        }
+        
+        return false; // Game continues
+    }
+    
+    endGame() {
+        console.log(`\n=== GAME OVER ===`);
+        console.log(`Final Score: ${this.humanPlayer.name}: ${this.humanPlayer.score}, ${this.computerPlayer.name}: ${this.computerPlayer.score}`);
+        
+        if (this.humanPlayer.score > this.computerPlayer.score) {
+            console.log(`${this.humanPlayer.name} wins the game!`);
+        } else if (this.computerPlayer.score > this.humanPlayer.score) {
+            console.log(`${this.computerPlayer.name} wins the game!`);
+        } else {
+            console.log(`It's a tie game!`);
+        }
     }
 }
 
@@ -92,15 +116,46 @@ const rl = readline.createInterface({
     output: process.stdout
 });
 
-const human = new HumanPlayer("You");
-const computer = new ComputerPlayer("Computer");
-const game = new Game(human, computer);
+let human, computer, game;
+
+function startGame() {
+    console.log("=== Welcome to Rock Paper Scissors! ===\n");
+    
+    rl.question("Enter your name: ", (playerName) => {
+        const name = playerName.trim() || "Player";
+        
+        function askForRounds() {
+            rl.question("How many rounds would you like to play? ", (rounds) => {
+                const maxRounds = parseInt(rounds);
+                
+                if (isNaN(maxRounds) || maxRounds <= 0) {
+                    console.log("Please enter a valid number of rounds (1 or more).");
+                    askForRounds(); // Only re-ask for rounds
+                    return;
+                }
+                
+                human = new HumanPlayer(name);
+                computer = new ComputerPlayer("Computer");
+                game = new Game(human, computer, maxRounds);
+                
+                console.log(`\nGreat! ${name} vs Computer`);
+                console.log(`Playing ${maxRounds} round${maxRounds > 1 ? 's' : ''}.\n`);
+                
+                askForChoice();
+            });
+        }
+        
+        askForRounds();
+    });
+}
 
 function askForChoice() {
-    rl.question("Enter rock, paper, scissors, or type 'exit' to quit: ", (input) => {
-        if (input.toLowerCase() === 'exit') {
+    rl.question(`(Round ${game.currentRound + 1}/${game.maxRounds}) Enter rock, paper, scissors, or type 'quit' to stop playing `, (input) => {
+        if (input.toLowerCase() === 'quit') {
             console.log("Thanks for playing!");
-            game.score;
+            if (game.currentRound > 0) {
+                game.endGame();
+            }
             rl.close();
             return;
         }
@@ -112,11 +167,15 @@ function askForChoice() {
         }
 
         computer.makeChoice();
-        game.playRound();
-        game.score;
+        const gameOver = game.playRound();
+        
+        if (gameOver) {
+            rl.close();
+            return;
+        }
+        
         askForChoice();
     });
 }
 
-console.log("Welcome to Rock Paper Scissors!");
-askForChoice();
+startGame();
