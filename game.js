@@ -108,10 +108,51 @@ class Game {
         } else {
             console.log(`It's a tie game!`);
         }
+        
+        this.askPlayAgain();
+    }
+    
+    askPlayAgain() {
+        rl.question("\nWould you like to play again? (yes/no): ", (answer) => {
+            const response = answer.toLowerCase().trim();
+            
+            if (response === 'yes' || response === 'y') {
+                // Reset scores and start new game with same player name
+                this.humanPlayer.score = 0;
+                this.computerPlayer.score = 0;
+                this.currentRound = 0;
+                
+                const askForRounds = () => {
+                    rl.question("How many rounds would you like to play this time? ", (rounds) => {
+                        const maxRounds = parseInt(rounds);
+                        
+                        if (isNaN(maxRounds) || maxRounds <= 0) {
+                            console.log("Please enter a valid number of rounds (1 or more).");
+                            askForRounds();
+                            return;
+                        }
+                        
+                        this.maxRounds = maxRounds;
+                        console.log(`\nGreat! ${this.humanPlayer.name} vs Computer`);
+                        console.log(`Playing ${maxRounds} round${maxRounds > 1 ? 's' : ''}.\n`);
+                        
+                        askForChoice();
+                    });
+                };
+                
+                askForRounds();
+            } else if (response === 'no') {
+                console.log("Thanks for playing!");
+                rl.close();
+            } else {
+                console.log("Please enter 'yes' or 'no'.");
+                this.askPlayAgain();
+            }
+        });
     }
 }
 
-const rl = readline.createInterface({
+let rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
 });
@@ -155,8 +196,9 @@ function askForChoice() {
             console.log("Thanks for playing!");
             if (game.currentRound > 0) {
                 game.endGame();
+            } else {
+                rl.close();
             }
-            rl.close();
             return;
         }
 
@@ -170,7 +212,7 @@ function askForChoice() {
         const gameOver = game.playRound();
         
         if (gameOver) {
-            rl.close();
+            // Don't close rl here, let endGame handle it
             return;
         }
         
